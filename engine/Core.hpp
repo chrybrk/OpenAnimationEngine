@@ -20,4 +20,20 @@ namespace OpenAnimationEngine {
 		return std::make_shared<T>(std::forward<Args>(args)...);
 	}
 
+	enum class Alignment
+	{
+		TopLeft,
+		TopRight,
+		BottomLeft,
+		BottomRight,
+		Center,
+		Left,
+		Right,
+		Top,
+		Bottom
+	};
+
+	Vector2 GetPositionOnSurface(Alignment alignment, Vector2 surfaceSize, Vector2 objectSize, Vector2 gap);
+	Vector2 GetPositionOnSubSurface(Alignment alignment, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 objectSize, Vector2 gap);
+
 }

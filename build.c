@@ -25,8 +25,8 @@ int main(int argc, char *argv[])
 					"-Iengine/",
 					"-Ivendor/include/",
 					"-c", engFP[i],
-					"-o",
 					LIBS,
+					"-o",
 					writef("bin/%s.o", engFP[i])
 				);
 		}
