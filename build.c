@@ -1,57 +1,44 @@
 #define IMPLEMENT_BUILD_C
 #include "build.h"
 
-#define CC "g++"
-#define CFLAGS  "-O3", "-g0", "-Ofast"
-
-#define LIBS "-Lvendor/lib/ -l:libraylib.a -lm"
-
-int main(int argc, char *argv[])
+void **merge_two_buffer(void **a, size_t n, void **b, size_t m)
 {
-	int engFPlen;
-	char **engFP = get_files_from_directory("engine/", &engFPlen);
+	void **buffer = malloc((m + n) * sizeof(void**));
 
-	if (needs_recompilation("bin/libengine.a", (const char **)engFP, engFPlen))
-	{
-		for (size_t i = 0; i < engFPlen; ++i)
-		{
-			size_t len = strlen(engFP[i]);
-			char *s = substr(engFP[i], 3);
+	for (size_t i = 0; i < n; ++i) buffer[i] = a[i];
+	for (size_t i = 0; i < m; ++i) buffer[i + n] = b[i];
 
-			if (!strcmp(s, "cpp"))
-				CMD(
-					CC,
-					CFLAGS,
-					"-Iengine/",
-					"-Ivendor/include/",
-					"-c", engFP[i],
-					LIBS,
-					"-o",
-					writef("bin/%s.o", engFP[i])
-				);
-		}
+	return buffer;
+}
 
-		CMD("ar", "rcs", "bin/libengine.a", "bin/engine/*.o");
-	}
+int main(int argc, char **argv)
+{
+	int n;
+	char **files = get_list_of_files_ext("oaelib/", ".c", &n);
+	library_static("gcc -Ioaelib/", files, n, "bin/", "liboae.a");
 
-	int SandboxFPlen;
-	char **sandboxFP = get_files_from_directory("sandbox/", &SandboxFPlen);
-
-	if (needs_recompilation("bin/sandbox", (const char**)sandboxFP, SandboxFPlen))
+	int m;
+	char **source = get_list_of_files_ext("sandbox/", ".c", &m);
+	if (needs_recompilation("bin/sandbox", (const char **)merge_two_buffer((void**)source, m, (void *[]){ "bin/liboae.a" }, 1), m + 1))
 	{
 		CMD(
-			CC,
-			CFLAGS,
-			"-Iengine/",
-			"-Ivendor/include/",
-			"sandbox/*.cpp",
-			"-Lbin/",
-			"-l:libengine.a",
-			LIBS,
+			"gcc",
+			"-Ioaelib",
+			"-Isandbox",
+			"-Ivendor/raylib/include",
+			join(' ', (const char **)source, m),
 			"-o",
-			"bin/sandbox"
+			"bin/sandbox",
+			"-Lvendor/raylib/lib",
+			"-Lbin/",
+			"-l:libraylib.a",
+			"-lm",
+			"-l:liboae.a"
 		);
 	}
+
+	if (needs_recompilation("bin/test", (const char*[]){ "test/main.c" }, 1))
+		CMD("gcc", "test/main.c", "-o", "bin/test");
 
 	return 0;
 }

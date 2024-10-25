@@ -1,87 +1,28 @@
 #ifdef IMPLEMENT_BUILD_C
 
-#if __WIN32__
-#include <errno.h>
-#endif
+/*
+	MIT License
 
-// ------------------------------------------
+	Copyright (c) 2024 Chry003
 
-// Regular text
-#define TBLK "\e[0;30m"
-#define TRED "\e[0;31m"
-#define TGRN "\e[0;32m"
-#define TYEL "\e[0;33m"
-#define TBLU "\e[0;34m"
-#define TMAG "\e[0;35m"
-#define TCYN "\e[0;36m"
-#define TWHT "\e[0;37m"
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
 
-// Regular bold text
-#define BBLK "\e[1;30m"
-#define BRED "\e[1;31m"
-#define BGRN "\e[1;32m"
-#define BYEL "\e[1;33m"
-#define BBLU "\e[1;34m"
-#define BMAG "\e[1;35m"
-#define BCYN "\e[1;36m"
-#define BWHT "\e[1;37m"
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
 
-// Regular underline text
-#define UBLK "\e[4;30m"
-#define URED "\e[4;31m"
-#define UGRN "\e[4;32m"
-#define UYEL "\e[4;33m"
-#define UBLU "\e[4;34m"
-#define UMAG "\e[4;35m"
-#define UCYN "\e[4;36m"
-#define UWHT "\e[4;37m"
-
-// Regular background
-#define BLKB "\e[40m"
-#define REDB "\e[41m"
-#define GRNB "\e[42m"
-#define YELB "\e[43m"
-#define BLUB "\e[44m"
-#define MAGB "\e[45m"
-#define CYNB "\e[46m"
-#define WHTB "\e[47m"
-
-// High intensty background 
-#define BLKHB "\e[0;100m"
-#define REDHB "\e[0;101m"
-#define GRNHB "\e[0;102m"
-#define YELHB "\e[0;103m"
-#define BLUHB "\e[0;104m"
-#define MAGHB "\e[0;105m"
-#define CYNHB "\e[0;106m"
-#define WHTHB "\e[0;107m"
-
-// High intensty text
-#define HBLK "\e[0;90m"
-#define HRED "\e[0;91m"
-#define HGRN "\e[0;92m"
-#define HYEL "\e[0;93m"
-#define HBLU "\e[0;94m"
-#define HMAG "\e[0;95m"
-#define HCYN "\e[0;96m"
-#define HWHT "\e[0;97m"
-
-// Bold high intensity text
-#define BHBLK "\e[1;90m"
-#define BHRED "\e[1;91m"
-#define BHGRN "\e[1;92m"
-#define BHYEL "\e[1;93m"
-#define BHBLU "\e[1;94m"
-#define BHMAG "\e[1;95m"
-#define BHCYN "\e[1;96m"
-#define BHWHT "\e[1;97m"
-
-// Reset
-#define reset "\e[0m"
-#define CRESET "\e[0m"
-#define COLOR_RESET "\e[0m"
-
-// ------------------------------------------
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,76 +31,439 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#if __unix__
-#include <sys/wait.h>
-#endif
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
 
-#ifndef SOURCE_C_FILE
-#	define SOURCE_C_FILE "build.c"
+#if __WIN32__
+	#include <errno.h>
 #endif
 
-#ifndef SOURCE_EXEC_FILE
-#	if __WIN32__
-#		define SOURCE_EXEC_FILE "build.exe"
-#	else
-#		define SOURCE_EXEC_FILE "build"
-#	endif
+#if __unix__
+	#include <sys/wait.h>
 #endif
 
-#define safe(value)	__safe_callback__(value, (char*)__FILE__, __LINE__, (char*)__FUNCTION__)
-#define INFO(...)	printf("%s[INFO]:%s %s\n", BGRN, reset, writef(__VA_ARGS__));
-#define WARN(...)	printf("%s[WARN]:%s %s\n", BYEL, reset, writef(__VA_ARGS__));
-#define ERROR(...) printf("%s[ERROR]:%s %s\n", BRED, reset, writef(__VA_ARGS__)), exit(1);
-#define ACTION(...) printf("%s[ACTION]:%s %s\n", BCYN, reset, writef(__VA_ARGS__));
+// If user has not define file for auto compilation
+#ifndef BUILD_SOURCE_FILE
+	#define BUILD_SOURCE_FILE "build.c"
+#endif // BUILD_SOURCE_FILE
+
+#ifndef BUILD_OUTPUT_FILE
+	#if __WIN32__
+		#define BUILD_OUTPUT_FILE "build.exe" // windows
+	#else
+		#define BUILD_OUTPUT_FILE "build"			// linux
+	#endif
+#endif // BUILD_OUTPUT_FILE
+
+#ifndef CMD_DEBUG_OUTPUT
+	#define CMD_DEBUG_OUTPUT true
+#endif // CMD_DEBUG_OUTPUT
+
+#define DEFER(func) __attribute__((cleanup(func)))
+
+typedef enum {
+	BLACK 	= 0,
+	RED 		= 1,
+	GREEN 	= 2,
+	YELLOW 	= 3,
+	BLUE 		= 4,
+	MAGENTA = 5,
+	CYAN 		= 6,
+	WHITE 	= 7
+} TERM_COLOR;
+
+typedef enum {
+	TEXT = 0,
+	BOLD_TEXT,
+	UNDERLINE_TEXT,
+	BACKGROUND,
+	HIGH_INTEN_BG,
+	HIGH_INTEN_TEXT,
+	BOLD_HIGH_INTEN_TEXT,
+	RESET
+} TERM_KIND;
+
+struct download_info
+{
+	const char *url;
+	const char *out_dir;
+	const char *filename;
+	bool extract;
+	const char *extract_in_dir;
+	const char *tar_command;
+};
+
+/********************************************
+ * 						MACRO FUNCTIONS	
+********************************************/
 #define CMD(...) cmd_execute(__VA_ARGS__, NULL)
 #define writef(...) ({  writef_function(__VA_ARGS__, NULL); })
+#define INFO(...) printf("%s[INFO]:%s %s\n", get_term_color(TEXT, GREEN), get_term_color(RESET, 0), writef(__VA_ARGS__))
+#define WARN(...) printf("%s[WARN]:%s %s\n", get_term_color(TEXT, YELLOW), get_term_color(RESET, 0), writef(__VA_ARGS__))
+#define ERROR(...) printf("%s[ERROR]:%s %s\n", get_term_color(TEXT, RED), get_term_color(RESET, 0), writef(__VA_ARGS__)), exit(1);
 
-bool state_of_rebuilds = false;
-
-char *writef_function(char *s, ...);
-void cmd_execute(char *first, ...);
-char *join(unsigned char sep, const char **buffer, size_t n);
-void *__safe_callback__(void *PTR, char *F, int LINE, char *FUNCTION_NAME);
-time_t get_last_modification_time(const char *filename);
-bool needs_recompilation(const char *binary, const char *sources[], size_t num_sources);
-char **get_files_from_directory(const char *path, int *count);
-char *substr(const char *string, size_t pos);
+/********************************************
+ * 							DECLARATION
+********************************************/
 
 /*
- * I was trying to make `substr` in C, 
- * so that when you have (string, pos) it would generate new string from that position till last.
+ * Function: get_term_color(TERM_KIND kind, TERM_COLOR color)
+ * -----------------------
+ *  Generates a string for printing colored text.
  *
- * But, i accedently made it so that it would only capture given length;
+ * kind: Color affecting what part of text. (TERM_KIND)
+ * color: Color of the text (TERM_COLOR)
  *
- * Happy Accidents :)
+ * returns: Generated color format (const char *) 
+ */
+const char *get_term_color(TERM_KIND kind, TERM_COLOR color);
+
+/*
+ * Function: writef_function(char *s, ...)
+ * -----------------------
+ *  It works like `printf` but it returns formated string.
+ *
+ * s: Formated string (char *)
+ * ...: Arguments (auto)
+ *
+ * returns: Formated string (char *) 
+ *
+ * Note: String is allocated in heap, so it must be freed.
+ */
+char *writef_function(char *s, ...);
+
+/*
+ * Function: substr(const char *string, size_t n1, size_t n2)
+ * -----------------------
+ *  It will create a sub-string from given string,
+ *  in the range of n1 to n2.
+ *
+ * string: Initial string (const char *)
+ * n1: Starting index in the string (size_t)
+ * n2: Ending index in the string (size_t)
+ *
+ * returns: Sub-string (char *) 
+ *
+ * Note: String is allocated in heap, so it must be freed.
+ */
+char *substr(const char *string, size_t n1, size_t n2);
+
+/*
+ * Function: get_list_of_files(const char *path, int *count)
+ * -----------------------
+ *  Find all the files in the given path.
+ *
+ * path: Path (const char *)
+ * count: Sets count to be the length of the buffer (int *)
+ *
+ * returns: String buffer (char **) 
+ *
+ * Note: String is allocated in heap, so it must be freed.
+ */
+char **get_list_of_files(const char *path, int *count);
+
+/*
+ * Function: get_list_of_files_ext(const char *path, const char *ends_with, int *count)
+ * -----------------------
+ *  Find all the files in the given path.
+ *
+ * path: Path (const char *)
+ * ends_with: Extention (const char *)
+ * count: Sets count to be the length of the buffer (int *)
+ *
+ * returns: String buffer (char **) 
+ *
+ * Note: String is allocated in heap, so it must be freed.
+ */
+char **get_list_of_files_ext(const char *path, const char *ends_with, int *count);
+
+/*
+ * Function: get_last_modification_time(const char *filename)
+ * -----------------------
+ *  Returns the last modified time of the given file.
+ *
+ * filename: Path to the file (const char *)
+ *
+ * returns: Modified time of time (time_t) 
+ */
+time_t get_last_modification_time(const char *filename);
+
+/*
+ * Function: needs_recompilation(const char *binary, const char *sources[], size_t num_sources)
+ * -----------------------
+ *  Returns true if binary needs to be compiled,
+ *  if any of the given source has been modified after the binary is created.
+ *
+ * binary: Path to binary file (const char *)
+ * sources: List of source files that needs to check for modification (const char *[])
+ * num_sources: Length of the list (size_t) 
+ *
+ * returns: Returns boolean if binary needs compilation (bool) 
+ */
+bool needs_recompilation(const char *binary, const char *sources[], size_t num_sources);
+
+/*
+ * Function: join(unsigned char sep, const char **buffer, size_t n)
+ * -----------------------
+ *  Join the list of string into one string and separate them by a seperator.
+ *
+ * binary: Separator (unsigned char)
+ * buffer: List of string (const char **)
+ * n: Length of the list (size_t) 
+ *
+ * returns: Returns new string separated by seperator (char *) 
+ *
+ * Note: String is allocated in the heap, so it must be freed.
+ */
+char *join(unsigned char sep, const char **buffer, size_t n);
+
+/*
+ * Function: join_cstr(const char *sep, const char **buffer, size_t n)
+ * -----------------------
+ *  Join the list of string into one string and separate them by a seperator.
+ *
+ * binary: Separator (const char *)
+ * buffer: List of string (const char **)
+ * n: Length of the list (size_t) 
+ *
+ * returns: Returns new string separated by seperator (char *) 
+ *
+ * Note: String is allocated in the heap, so it must be freed.
+ */
+char *join_cstr(const char *sep, const char **buffer, size_t n);
+
+/*
+ * Function: separate(unsigned char sep, const char *string, size_t *n)
+ * -----------------------
+ *  Converts single string to list of multiple string from the seperator.
+ *
+ * seperator: Where to break the string (unsigned char)
+ * string: String (const char *)
+ * n: Length of list of strings (size_t *)
+ *
+ * returns: List of string (char **) 
+ *
+ * Note: String is allocated in the heap, so it must be freed.
+ */
+char **separate(unsigned char sep, const char *string, size_t *n);
+
+/*
+ * Function: cmd_execute(char *first, ...)
+ * -----------------------
+ *  Executes shell commands, using `system`.
+ *
+ * first: First command (char *)
+ * ...: Rest of the commands (char *)
+ *
+ */
+void cmd_execute(char *first, ...);
+
+/*
+ * Function: run_command(const char *command)
+ * -----------------------
+ *  Executes shell commands and returns output of the command.
+ *
+ * command: Command (const char *)
+ *
+ * returns: Returns output (char *) 
+ *
+ * Note: String is allocated in the heap, so it must be freed.
+ */
+char *run_command(const char *command);
+
+/*
+ * Function: strlistcmp(const char *s1, const char **s2, size_t n)
+ * -----------------------
+ *  It compares `s1` to `s2` and `s2` is a list of string.
+ *
+ * s1: String to compare from (const char *)
+ * s2: String2 to compare with (const char **)
+ * n: Length of list of strings `s2` (size_t)
+ *
+ * returns: True if `s1` matches with `s2` else False;
+ *
+ */
+bool strlistcmp(const char *s1, const char **s2, size_t n);
+
+/*
+ * Function: is_directory_exists(const char *path)
+ * -----------------------
+ *  Checks if path is a directory or not.
+ *
+ * path: Path of the directory (const char *)
+ *
+ * returns: True if it founds the path to be directory; else false. 
+ *
+ */
+bool is_directory_exists(const char *path);
+
+/*
+ * Function: is_file_exists(const char *path)
+ * -----------------------
+ *  Checks if path is a file or not.
+ *
+ * path: Path of the file (const char *)
+ *
+ * returns: True if it founds the path to be file; else false. 
+ *
+ */
+bool is_file_exists(const char *path);
+
+/*
+ * Function: create_directories(const char *s)
+ * -----------------------
+ *  Converts `s` to list of string,
+ *  and checks if item of list are directory
+ *  if they're not then it will create a new directory.
+ *
+ * s: Directories separated by a whitespace (const char *)
+ *
+ */
+void create_directories(const char *s);
+
+/*
+ * Function: create_directories_from_path(const char *path)
+ * -----------------------
+ *  Create directory from sub-path, if they do not exist already.
+ *
+ * path: Path `xyz/path/some/dir`, it will check if any of the sub-directory. (const char *)
+ *
+ */
+void create_directories_from_path(const char *path);
+
+/*
+ * Function: download(size_t n, struct download_info d_info[n])
+ * -----------------------
+ *  Downloads using `curl` and extract (if needed) using tar.
+ *
+ * n: Size of download infos. (size_t)
+ * d_info: List of items (struct download_info)
+ * 
 */
-char *substr(const char *string, size_t pos)
+void download(size_t n, struct download_info d_info[n]);
+
+/*
+ * Function: library_static(char *cmds, char **source_files, int n, const char *out_dir, const char *libname)
+ * -----------------------
+ *  Create a static library.
+ *
+ * cmds: Command that will be added to execution, and they are the initial commands. (char *)
+ * source_files: List of files. (const char **)
+ * n: Length of files. (int)
+ * out_dir: Output directory path. (const char *)
+ * libname: Output library name. (const char *)
+ *
+ * 
+*/
+void library_static(char *cmds, char **source_files, int n, const char *out_dir, const char *libname);
+
+/********************************************
+ * 						   DEFINITION	
+********************************************/
+const char *get_term_color(TERM_KIND kind, TERM_COLOR color)
 {
-	size_t len = strlen(string);
-
-	if (pos < len)
+	switch (kind)
 	{
-		char *s = (char*)malloc((len - pos) * sizeof(char));
-
-		for (size_t i = 0; i < (len - pos); ++i)
-			s[i] = string[i + (len - pos)];
-
-		s[len - pos] = '\0';
-
-		return s;
+		case TEXT: return writef("\e[0;3%dm", color);
+		case BOLD_TEXT: return writef("\e[1;3%dm", color);
+		case UNDERLINE_TEXT: return writef("\e[4;3%dm", color);
+		case BACKGROUND: return writef("\e[4%dm", color);
+		case HIGH_INTEN_BG: return writef("\e[0;10%dm", color);
+		case HIGH_INTEN_TEXT: return writef("\e[0;9%dm", color);
+		case BOLD_HIGH_INTEN_TEXT: return writef("\e[1;9%dm", color);
+		case RESET: return writef("\e[0m");
 	}
-	
-	return NULL;
 }
 
-char **get_files_from_directory(const char *path, int *count)
+char *writef_function(char *s, ...)
+{
+	// allocate small size buffer
+	size_t buffer_size = 64; // bytes
+	char *buffer = (char*)malloc(buffer_size);
+
+	if (buffer == NULL)
+	{
+		WARN("writef: Failed to allocate buffer.");
+		return NULL;
+	}
+
+	va_list ap;
+	va_start(ap, s);
+
+	int nSize = vsnprintf(buffer, buffer_size, s, ap);
+	if (nSize < 0)
+	{
+		free(buffer);
+		va_end(ap);
+	}
+
+	// if buffer does not have enough space then extend it.
+	if (nSize >= buffer_size)
+	{
+		buffer_size = nSize + 1;
+		buffer = (char*)realloc(buffer, buffer_size);
+
+		if (buffer == NULL)
+		{
+			WARN("writef: Failed to re-allocate buffer.");
+			return NULL;
+		}
+
+		va_end(ap);
+
+		va_start(ap, s);
+		vsnprintf(buffer, buffer_size, s, ap);
+	}
+
+	va_end(ap);
+
+	return buffer;
+}
+
+char *substr(const char *string, size_t n1, size_t n2)
+{
+	if (string == NULL)
+	{
+		WARN("substr: Cannot create substr from NULL.");
+		return NULL;
+	}
+
+	size_t len = strlen(string);
+
+	/*
+	 * n1 and n2 must be greater than 0,
+	 * and n1 must be smaller than n2,
+	 * n2 must be smaller than total length.
+	 *
+	 * Otherwise return NULL;
+	 */
+	if (n1 < 0 && n2 < 0 && n1 >= n2 && n2 >= len)
+	{
+		WARN("substr: Undefined behaviour of `n1` and `n2`.");
+		return NULL;
+	}
+
+	char *result = (char*)malloc((n2 - n1 + 1) * sizeof(char));
+	if (result == NULL)
+	{
+		WARN("substr: Failed to allocate buffer.");
+		return NULL;
+	}
+
+	for (size_t i = 0; i < n2 - n1; ++i)
+		result[i] = string[i + n1];
+
+	result[n2 - n1] = '\0';
+
+	return result;
+}
+
+char **get_list_of_files(const char *path, int *count)
 {
 	int internalCounter = 0;
-	char **buffer = (char**)safe(malloc(sizeof(char**) * internalCounter));
+	char **buffer = (char**)malloc(sizeof(char**) * internalCounter);
 
 	DIR *dir = opendir(path);
 	if (dir == NULL)
@@ -171,7 +475,6 @@ char **get_files_from_directory(const char *path, int *count)
 	struct dirent *data;
 	while ((data = readdir(dir)) != NULL)
 	{
-		// it means that the current *ptr is a file not a directory
 #		if __unix__
 		if (data->d_type != DT_DIR)
 #		elif __WIN32__
@@ -191,6 +494,38 @@ char **get_files_from_directory(const char *path, int *count)
 	return buffer;
 }
 
+char **get_list_of_files_ext(const char *path, const char *ends_with, int *count)
+{
+	char **file_list = get_list_of_files(path, count);
+
+	size_t n = 0;
+	for (int i = 0; i < *count; ++i)
+	{
+		size_t fl_len = strlen(file_list[i]);
+		size_t ew_len = strlen(ends_with);
+
+		if (!strcmp(ends_with, substr(file_list[i], fl_len - ew_len, fl_len)))
+			n++;
+	}
+
+	char **buffer = malloc(sizeof(char**) * n); n = 0;
+	for (int i = 0; i < *count; ++i)
+	{
+		size_t fl_len = strlen(file_list[i]);
+		size_t ew_len = strlen(ends_with);
+
+		if (!strcmp(ends_with, substr(file_list[i], fl_len - ew_len, fl_len)))
+		{
+			buffer[n] = malloc(sizeof(char) * fl_len);
+			buffer[n++] = file_list[i];
+		}
+	}
+
+	*count = n;
+
+	return buffer;
+}
+
 time_t get_last_modification_time(const char *filename)
 {
 	struct stat file_stat;
@@ -206,10 +541,7 @@ bool needs_recompilation(const char *binary, const char *sources[], size_t num_s
 {
 	time_t binary_timestamp = get_last_modification_time(binary);
 	if (binary_timestamp == (time_t)(-1))
-	{
-		state_of_rebuilds = true;
 		return true;
-	}
 
 	for (size_t i = 0; i < num_sources; ++i) {
 		time_t source_timestamp = get_last_modification_time(sources[i]);
@@ -219,50 +551,12 @@ bool needs_recompilation(const char *binary, const char *sources[], size_t num_s
 		}
 
 		if (source_timestamp > binary_timestamp)
-		{
-			state_of_rebuilds = true;
 			return true;
-		}
 	}
 
 	INFO("`%s` is already updated.", binary);
 
 	return false;
-}
-
-char *writef_function(char *s, ...)
-{
-	size_t buffer_size = 64; // 64 bytes
-	char *buffer = (char*)malloc(buffer_size);
-
-	if (buffer == NULL) return NULL;
-
-	va_list ap;
-	va_start(ap, s);
-
-	int nSize = vsnprintf(buffer, buffer_size, s, ap);
-	if (nSize < 0)
-	{
-		free(buffer);
-		va_end(ap);
-	}
-
-	if (nSize >= buffer_size)
-	{
-		buffer_size = nSize + 1;
-		buffer = (char*)realloc(buffer, buffer_size);
-
-		if (buffer == NULL) return NULL;
-
-		va_end(ap);
-
-		va_start(ap, s);
-		vsnprintf(buffer, buffer_size, s, ap);
-	}
-
-	va_end(ap);
-
-	return buffer;
 }
 
 char *join(unsigned char sep, const char **buffer, size_t n)
@@ -290,6 +584,55 @@ char *join(unsigned char sep, const char **buffer, size_t n)
 	for (size_t i = 0; i < n; ++i)
 	{
 		const char *string = writef("%s%c", buffer[i], sep);
+		size_t len = strlen(string) + 1;
+		
+		if ((ptr_in_pool + len) >= current_pool_size)
+		{
+			current_pool_size += POOL_SIZE;
+			pool = (char*)realloc(pool, current_pool_size);
+		}
+
+		ptr_in_pool += len;
+		pool = strcat(pool, string);
+		pool[ptr_in_pool + 1] = '\0';
+	}
+
+	// create a final buffer to be returned.
+	char *bf = (char*)malloc(ptr_in_pool + 1);
+	bf = strncpy(bf, pool, ptr_in_pool);
+	bf[ptr_in_pool] = '\0'; // don't forget to add null ptr, it is pain in the ass.
+	
+	// we don't need pool because we have already created smaller pool of content size.
+	free(pool);
+
+	return bf;
+}
+
+char *join_cstr(const char *sep, const char **buffer, size_t n)
+{
+	/* *** BUFFER ALLOCATOR *** */
+
+	/*
+		* How this is going to work?
+		* Well, we define a *pool, and fill it up.
+		* If pools fills up, we re-alloc it with the same size.
+	*/
+
+	// set the max size for pool
+	const size_t POOL_SIZE = 64 * 1024;
+
+	char *pool = (char*)malloc(POOL_SIZE); // 65536 bytes
+	if (pool == NULL) printf("Failed to create pool for joining text.\n");
+
+	// set pool to NULL
+	pool = (char*)memset(pool, 0, POOL_SIZE);
+
+	size_t current_pool_size = POOL_SIZE;
+	size_t ptr_in_pool = 0; // it will keep track where we are in the pool.	
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		const char *string = writef("%s%s", buffer[i], sep);
 		size_t len = strlen(string);
 		
 		if ((ptr_in_pool + len) >= current_pool_size)
@@ -307,19 +650,54 @@ char *join(unsigned char sep, const char **buffer, size_t n)
 	char *bf = (char*)malloc(ptr_in_pool);
 	bf = strncpy(bf, pool, ptr_in_pool);
 	bf[ptr_in_pool] = '\0'; // don't forget to add null ptr, it is pain in the ass.
+	
+	// we don't need pool because we have already created smaller pool of content size.
+	free(pool);
 
 	return bf;
 }
 
-void *__safe_callback__(void *PTR, char *F, int LINE, char *FUNCTION_NAME)
+char **separate(unsigned char sep, const char *string, size_t *n)
 {
-	if (PTR == NULL)
+	size_t len = 0;
+
+	for (size_t i = 0; i < strlen(string); ++i)
+		if (string[i] == sep) len++;
+
+	len++;
+
+	*n = len;
+	char **buffer = (char**)malloc(len * sizeof(char**));
+
+	size_t p1 = 0;
+	size_t p2 = 0;
+	size_t b_idx = 0;
+
+	for (; p2 < strlen(string); ++p2)
 	{
-		fprintf(stdout, "%s:%d :: In %s: \n\tExpected not NULL value, but got NULL.\n", F, LINE, FUNCTION_NAME);
-		exit(EXIT_FAILURE);
+		if (string[p2] == sep)
+		{
+			char *sub_str = substr(string, p1, p2);
+			size_t sub_str_len = strlen(sub_str) + 1;
+
+			buffer[b_idx] = (char*)malloc(sub_str_len * sizeof(char));
+			strcpy(buffer[b_idx], sub_str);
+
+			free(sub_str);
+			p1 = p2 + 1;
+			b_idx++;
+		}
 	}
-	
-	return PTR;
+
+	char *sub_str = substr(string, p1, strlen(string));
+	size_t sub_str_len = strlen(sub_str) + 1;
+
+	buffer[b_idx] = (char*)malloc(sub_str_len * sizeof(char));
+	strcpy(buffer[b_idx], sub_str);
+
+	free(sub_str);
+
+	return buffer;
 }
 
 void cmd_execute(char *first, ...)
@@ -340,7 +718,6 @@ void cmd_execute(char *first, ...)
 	va_end(args);
 
 	char *buffer[length + 1];
-	safe(buffer);
 
 	length = 0;
 	buffer[length++] = first;
@@ -355,7 +732,10 @@ void cmd_execute(char *first, ...)
 	va_end(args);
 	
 	char *b = join(' ', (const char**)buffer, length);
+
+#if CMD_DEBUG_OUTPUT
 	INFO("CMD: %s", b);
+#endif
 
 	int status = system(b);
 	if (status != 0)
@@ -368,21 +748,184 @@ void cmd_execute(char *first, ...)
 	free(b);
 }
 
+char *run_command(const char *command)
+{
+	char* result = NULL;
+	size_t size = 0;
+	FILE* fp = popen(command, "r");
+	if (fp == NULL)
+	{
+		perror("popen failed");
+		return NULL;
+	}
+
+	// Read the output a line at a time
+	char buffer[128];
+	while (fgets(buffer, sizeof(buffer), fp) != NULL)
+	{
+		size_t len = strlen(buffer);
+		char* new_result = realloc(result, size + len + 1);
+		if (new_result == NULL)
+		{
+			perror("realloc failed");
+			free(result);
+			pclose(fp);
+			return NULL;
+		}
+		result = new_result;
+		memcpy(result + size, buffer, len);
+		size += len;
+		result[size] = '\0';
+	}
+
+	pclose(fp);
+	return result;
+}
+
+bool strlistcmp(const char *s1, const char **s2, size_t n)
+{
+	for (size_t i = 0; i < n; ++i)
+		if (!strcmp(s1, s2[i])) return true;
+
+	return false;
+}
+
+bool is_directory_exists(const char *path)
+{
+	char *t = run_command(writef("test -d %s && echo 0 || echo 1", path));
+	return !atoi(t);
+}
+
+bool is_file_exists(const char *path)
+{
+	char *t = run_command(writef("test -f %s && echo 0 || echo 1", path));
+	return !atoi(t);
+}
+
+void create_directories(const char *s)
+{
+	size_t n;
+	char **bf = separate(' ', s, &n);
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		if (!is_directory_exists(bf[i]))
+			CMD("mkdir", bf[i]);
+	}
+}
+
+void create_directories_from_path(const char *path)
+{
+	size_t n;
+	char **d = separate('/', path, &n);
+
+	size_t p2 = 0;
+	for (size_t i = 0; i < n; ++i)
+	{
+		char *d_name = d[i];
+		p2 += strlen(d_name) + 1;
+
+		char *ss = substr(path, 0, p2);
+
+		if (!is_directory_exists(ss))
+			CMD("mkdir", ss);
+
+		free(ss);
+	}
+
+	free(d);
+}
+
+void download(size_t n, struct download_info d_info[n])
+{
+	for (size_t i = 0; i < n; ++i)
+	{
+		struct download_info df = d_info[i];
+
+		create_directories_from_path(df.out_dir);
+
+		const char *path = writef("%s%s", df.out_dir, df.filename);
+		if (!is_file_exists(path))
+			CMD("curl", "-L", "-o", path, df.url);
+
+		if (df.extract && !is_directory_exists(df.extract_in_dir))
+		{
+			create_directories_from_path(df.extract_in_dir);
+			CMD((char*)df.tar_command, (char*)path, "-C", df.extract_in_dir, "-v");
+		}
+	}
+}
+
+void library_static(char *cmds, char **files, int n, const char *out_dir, const char *libname)
+{
+	bool lib_needs_to_compile = false;
+
+	for (int i = 0; i < n; ++i)
+	{
+		size_t path_len;
+		char **paths = separate('/', writef("%s%s", out_dir, files[i]), &path_len);
+
+		size_t len = strlen(files[i]);
+		char *path = substr(files[i], 0, len - strlen(paths[path_len - 1]));
+
+		create_directories_from_path(writef("%s%s", out_dir, path));
+
+		if (needs_recompilation(writef("%s%s.o", out_dir, files[i]), (const char *[]){ files[i] }, 1))
+		{
+			CMD(cmds, "-c", files[i], "-o", writef("%s%s.o", out_dir, files[i]));
+			lib_needs_to_compile = true;
+		}
+
+		free(path);
+		free(paths);
+	}
+
+	if (lib_needs_to_compile)
+	{
+		char **buffer = malloc(sizeof(char*) * n);
+		for (int i = 0; i < n; ++i)
+		{
+			char *s = writef("%s%s.o", out_dir, files[i]);
+			size_t len = strlen(s) + 1;
+
+			buffer[i] = malloc(sizeof(char) * len);
+			strcpy(buffer[i], s);
+
+			free(s);
+		}
+
+		char *f = join(' ', (const char **)buffer, n);
+		CMD("ar", "rcs", writef("%s%s", out_dir, libname), f);
+
+		free(buffer);
+		free(f);
+	}
+}
+
+
+
+/*
+ * build_itself()
+ *
+ * It is a function that gets called automatically,
+ * it checks the status of current build source and build binary.
+ * If it needs recompilition then it would do it.
+*/
 void build_itself() __attribute__((constructor));
 void build_itself()
 {
-	const char *sources[] = { SOURCE_C_FILE, "build.h" };
-	if (needs_recompilation(SOURCE_EXEC_FILE, sources, sizeof(sources) / sizeof(sources[0])))
+	const char *sources[] = { BUILD_SOURCE_FILE, "build.h" };
+	if (needs_recompilation(BUILD_OUTPUT_FILE, sources, sizeof(sources) / sizeof(sources[0])))
 	{
 		INFO("Source file has changed, it needs to be recompiled.");
-		CMD("gcc", SOURCE_C_FILE, "-I.", "-o", writef("%s.new", SOURCE_EXEC_FILE));
-		CMD("mv", SOURCE_EXEC_FILE, writef("%s.old", SOURCE_EXEC_FILE));
-		CMD("mv", writef("%s.new", SOURCE_EXEC_FILE), SOURCE_EXEC_FILE);
+		CMD("gcc", BUILD_SOURCE_FILE, "-I.", "-o", writef("%s.new", BUILD_OUTPUT_FILE));
+		CMD("mv", BUILD_OUTPUT_FILE, writef("%s.old", BUILD_OUTPUT_FILE));
+		CMD("mv", writef("%s.new", BUILD_OUTPUT_FILE), BUILD_OUTPUT_FILE);
 #ifdef __unix__
-		CMD(writef("./%s", SOURCE_EXEC_FILE));
+		CMD(writef("./%s", BUILD_OUTPUT_FILE));
 #endif
 		exit(0);
 	}
 }
 
-#endif
+#endif // IMPLEMENT_BUILD_C
