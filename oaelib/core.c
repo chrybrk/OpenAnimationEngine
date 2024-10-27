@@ -59,13 +59,18 @@ void timeline_add_keyframe(timeline_T *timeline, keyframe_T *keyframe)
 
 void timeline_draw(timeline_T *timeline)
 {
-	foreach(keyframe_T *, list_iterator(timeline->keyframes),
-		{
-			item->object->draw(item->object, 0.0f, item->position, item->color);
-		}
-	);
+	foreach(keyframe_T *item, list_iterator(timeline->keyframes), {
+		item->object->draw(item->object, (timeline->currentTime - item->start) / (item->end - item->start), item->position, item->color);
+	});
 }
 
+// TODO: Add keyboard controls.
+// TODO: Add play / pause state.
 void timeline_update(timeline_T *timeline, float dt)
 {
+	if (timeline->currentTime >= timeline->duration)
+	{
+		if (timeline->reset) timeline->currentTime = 0.0f;
+	}
+	else timeline->currentTime += dt;
 }

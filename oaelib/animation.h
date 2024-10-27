@@ -3,17 +3,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <raylib.h>
 
 typedef struct ANIMATION_STRUCT animation_T;
 
-typedef enum 
+typedef struct ANIMATION_PROPERTIES_STRUCT
 {
-	FADE_IN = 0,
-	FADE_OUT
-} animation_kind_T;
+	float f1;
+	Vector2 v2;
+	Vector3 v3;
+	Vector4 v4;
+	Color color;
+} animation_properties_T;
 
-animation_T *init_animation(animation_kind_T kind, ...);
+void fade_in_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
+void fade_out_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
+
+animation_T *init_animation();
 void terminate_animation() __attribute__((destructor));
-void animation_flush(animation_T *animation);
+void animation_push(animation_T *animation, float start, float end, animation_properties_T animation_properties, void (*animation_function)(float, animation_properties_T, animation_properties_T*));
+void animation_flush(animation_T *animation, float t, animation_properties_T *animation_properties);
 
 #endif // __ANIMATION_H__

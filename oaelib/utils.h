@@ -14,7 +14,15 @@ struct iterator
 	void **buffer;
 };
 
-#define foreach(cast_to, iterator, body) { for (size_t __index = 0; __index < iterator.size; ++__index) { cast_to item = (cast_to)(iterator.buffer[__index]); body } }
+// #define foreach(cast_to, iterator, body) { for (size_t __index = 0; __index < iterator.size; ++__index) { cast_to item = (cast_to)(iterator.buffer[__index]); body } }
+#define foreach(VAR, ITER, BODY) \
+	{ \
+		for (size_t _item_index = 0; _item_index < ITER.size; ++_item_index) \
+		{ \
+			VAR = ITER.buffer[_item_index]; \
+			BODY \
+		} \
+	} \
 
 /*
  * Allocate a buffer of POOL_SIZE * item_size (initially)
