@@ -60,7 +60,8 @@ void timeline_add_keyframe(timeline_T *timeline, keyframe_T *keyframe)
 void timeline_draw(timeline_T *timeline)
 {
 	foreach(keyframe_T *item, list_iterator(timeline->keyframes), {
-		item->object->draw(item->object, (timeline->currentTime - item->start) / (item->end - item->start), item->position, item->color);
+		if (item->start <= timeline->currentTime)
+			item->object->draw(item->object, (timeline->currentTime - item->start) / (item->end - item->start), item->position, item->color);
 	});
 }
 

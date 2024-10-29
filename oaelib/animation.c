@@ -18,6 +18,21 @@ void fade_out_animation(float t, animation_properties_T init_properties, animati
 	end_properties->color = Fade(end_properties->color, 1.0f - t);
 }
 
+void color_interpolation_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties)
+{
+	unsigned char r = Lerp(init_properties.color.r, end_properties->color.r, t);
+	unsigned char g = Lerp(init_properties.color.g, end_properties->color.g, t);
+	unsigned char b = Lerp(init_properties.color.b, end_properties->color.b, t);
+	unsigned char a = Lerp(init_properties.color.a, end_properties->color.a, t);
+
+	end_properties->color = (Color) { r, g, b, a };
+}
+
+void move_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties)
+{
+	end_properties->v2 = Vector2MoveTowards(end_properties->v2, init_properties.v2, Vector2Distance(end_properties->v2, init_properties.v2) * t);
+}
+
 typedef struct ANIMATION_STRUCT
 {
 	list_T *animations;

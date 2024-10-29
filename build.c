@@ -38,7 +38,19 @@ int main(int argc, char **argv)
 	}
 
 	if (needs_recompilation("bin/test", (const char*[]){ "test/main.c" }, 1))
-		CMD("gcc", "test/main.c", "-o", "bin/test");
+	{
+		CMD(
+			"gcc",
+			"-Ivendor/raylib/include/",
+			"test/main.c",
+			"-o",
+			"bin/test",
+			"-Lvendor/raylib/lib",
+			"-Lbin/",
+			"-l:libraylib.a",
+			"-lm"
+		);
+	}
 
 	return 0;
 }

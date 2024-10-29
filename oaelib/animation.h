@@ -16,8 +16,11 @@ typedef struct ANIMATION_PROPERTIES_STRUCT
 	Color color;
 } animation_properties_T;
 
+/* animation functions */
 void fade_in_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
 void fade_out_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
+void color_interpolation_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
+void move_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
 
 animation_T *init_animation();
 void terminate_animation() __attribute__((destructor));

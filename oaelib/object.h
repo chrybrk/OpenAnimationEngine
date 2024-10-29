@@ -6,15 +6,9 @@
 #include <stddef.h>
 #include "animation.h"
 
-typedef enum
-{
-	TEXT = 0
-} object_kind_T;
-
 typedef struct
 {
 	void (*draw)(void *object, float t, Vector2 position, Color color);
-	object_kind_T kind;
 } object_T;
 
 typedef struct TEXT_OBJECT
