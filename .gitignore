@@ -1,3 +1,2 @@
-./bin/
-./ccls-cache
 bin
+ccls-cache

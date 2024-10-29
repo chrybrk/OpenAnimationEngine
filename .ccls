@@ -1,3 +1,7 @@
+%clang
+
+-I/usr/include
+-I/usr/local/include
 -I.
 -I../
 -I./oaelib

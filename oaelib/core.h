@@ -39,6 +39,30 @@ keyframe_T *init_keyframe(float start, float end, Vector2 position, Color color,
 timeline_T *init_timeline(float duration, bool reset);
 
 /*
+ * Function: timeline_get_duration(timeline_T *timeline)
+ * -----------------------
+ *  Get duration from timeline
+ *
+ * 	timeline: Pointer to timeline (timeline_T *)
+ *
+ * 	return: Duration (float)
+ * 
+*/
+float timeline_get_duration(timeline_T *timeline);
+
+/*
+ * Function: timeline_get_current_time(timeline_T *timeline)
+ * -----------------------
+ *  Get current time from timeline
+ *
+ * 	timeline: Pointer to timeline (timeline_T *)
+ *
+ * 	return: Time (float)
+ * 
+*/
+float timeline_get_current_time(timeline_T *timeline);
+
+/*
  * Function: timeline_add_keyframe(timeline_T *timeline, keyframe_T keyframe)
  * -----------------------
  *  Adds keyframe to the timeline.

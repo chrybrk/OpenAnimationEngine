@@ -52,6 +52,16 @@ timeline_T *init_timeline(float duration, bool reset)
 	return timeline;
 }
 
+float timeline_get_duration(timeline_T *timeline)
+{
+	return timeline->duration;
+}
+
+float timeline_get_current_time(timeline_T *timeline)
+{
+	return timeline->currentTime;
+}
+
 void timeline_add_keyframe(timeline_T *timeline, keyframe_T *keyframe)
 {
 	list_push(timeline->keyframes, keyframe);

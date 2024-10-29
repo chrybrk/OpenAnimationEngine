@@ -52,5 +52,25 @@ int main(int argc, char **argv)
 		);
 	}
 
+	if (argc >= 2 && !strcmp(argv[1], "convert"))
+	{
+		CMD(
+				"ffmpeg",
+				"-f",
+				"rawvideo",
+				"-pixel_format",
+				"rgba",
+				"-video_size",
+				"800x450",
+				"-framerate",
+				"30",
+				"-i",
+				"bin/output_video.raw",
+				"-c:v",
+				"libx264",
+				"bin/output_video.mp4"
+			 );
+	}
+
 	return 0;
 }
