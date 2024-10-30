@@ -61,14 +61,14 @@ int main(int argc, char **argv)
 				"-pixel_format",
 				"rgba",
 				"-video_size",
-				"800x450",
+				"1080x720",
 				"-framerate",
 				"30",
 				"-i",
-				"bin/output_video.raw",
+				"bin/output.raw",
 				"-c:v",
 				"libx264",
-				"bin/output_video.mp4"
+				"bin/output.mp4"
 			 );
 	}
 
