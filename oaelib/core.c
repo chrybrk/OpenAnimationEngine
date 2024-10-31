@@ -17,6 +17,31 @@ typedef struct TIMELINE_STRUCT
 	list_T *keyframes;
 } timeline_T;
 
+Vector2 get_alignment_on_surface(alignment_T alignment, Vector2 surface_size, Vector2 object_size, Vector2 offset)
+{
+	Vector2 result;
+
+	switch (alignment)
+	{
+		case top: result = (Vector2){ surface_size.x / 2.0f - object_size.x / 2.0f + offset.x, offset.y }; break;
+		case bottom: result = (Vector2){ surface_size.x / 2.0f - object_size.x / 2.0f + offset.x, surface_size.y + offset.y }; break;
+		case left: result = (Vector2){ offset.x, surface_size.y / 2.0f - object_size.y / 2.0f + offset.y }; break;
+		case right: result = (Vector2){ surface_size.x + offset.x, surface_size.y / 2.0f - object_size.y / 2.0f + offset.y }; break;
+		case tleft: result = (Vector2){ offset.x, offset.y }; break;
+		case tright: result = (Vector2){ offset.x + surface_size.x, offset.y }; break;
+		case bleft: result = (Vector2){ offset.x, surface_size.y + offset.y }; break;
+		case bright: result = (Vector2){ offset.x + surface_size.x, surface_size.y + offset.y }; break;
+		case center: result = (Vector2){ surface_size.x / 2.0f - object_size.x / 2.0f + offset.x, surface_size.y / 2.0f - object_size.y / 2.0f + offset.y }; break;
+	}
+
+	return result;
+}
+
+Vector2 offset_alignment(Vector2 position, Vector2 size, float offset_x, float offset_y)
+{
+	return (Vector2) { position.x - size.x / 2.0f + offset_x, position.y - size.y / 2.0f + offset_y };
+}
+
 keyframe_T *init_keyframe(float start, float end, Vector2 position, Color color, object_T *object)
 {
 	keyframe_T *keyframe = malloc(sizeof(struct KEYFRAME_STRUCT));
@@ -52,9 +77,25 @@ timeline_T *init_timeline(float duration, bool reset)
 	return timeline;
 }
 
+void timeline_set_duration(timeline_T *timeline, float duration)
+{
+	timeline->duration = duration;
+}
+
 float timeline_get_duration(timeline_T *timeline)
 {
 	return timeline->duration;
+}
+
+float timeline_get_max_duration_from_keyframe(timeline_T *timeline)
+{
+	float max = 0.0f;
+
+	foreach(keyframe_T *item, list_iterator(timeline->keyframes), {
+			max = item->end > max ? item->end : max;
+	});
+
+	return max;
 }
 
 float timeline_get_current_time(timeline_T *timeline)
@@ -70,7 +111,7 @@ void timeline_add_keyframe(timeline_T *timeline, keyframe_T *keyframe)
 void timeline_draw(timeline_T *timeline)
 {
 	foreach(keyframe_T *item, list_iterator(timeline->keyframes), {
-		if (item->start <= timeline->currentTime)
+		if (item->start <= timeline->currentTime && item->end >= timeline->currentTime)
 			item->object->draw(item->object, (timeline->currentTime - item->start) / (item->end - item->start), item->position, item->color);
 	});
 }

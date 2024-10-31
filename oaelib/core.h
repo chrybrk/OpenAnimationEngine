@@ -9,6 +9,22 @@
 typedef struct KEYFRAME_STRUCT keyframe_T;
 typedef struct TIMELINE_STRUCT timeline_T;
 
+typedef enum 
+{
+	top,
+	bottom,
+	left,
+	right,
+	tleft,
+	tright,
+	bleft,
+	bright,
+	center
+} alignment_T;
+
+Vector2 get_alignment_on_surface(alignment_T alignment, Vector2 surface_size, Vector2 object_size, Vector2 offset);
+Vector2 offset_alignment(Vector2 position, Vector2 size, float offset_x, float offset_y);
+
 /*
  * Function: init_keyframe(float start, float end, Vector2 position, Color color, object_T object))
  * -----------------------
@@ -39,6 +55,17 @@ keyframe_T *init_keyframe(float start, float end, Vector2 position, Color color,
 timeline_T *init_timeline(float duration, bool reset);
 
 /*
+ * Function: timeline_set_duration(timeline_T *timeline, float duration)
+ * -----------------------
+ *  Set duration from timeline
+ *
+ * 	timeline: Pointer to timeline (timeline_T *)
+ * 	duration: New duration
+ * 
+*/
+void timeline_set_duration(timeline_T *timeline, float duration);
+
+/*
  * Function: timeline_get_duration(timeline_T *timeline)
  * -----------------------
  *  Get duration from timeline
@@ -49,6 +76,18 @@ timeline_T *init_timeline(float duration, bool reset);
  * 
 */
 float timeline_get_duration(timeline_T *timeline);
+
+/*
+ * Function: timeline_get_max_duration_from_keyframe(timeline_T *timeline)
+ * -----------------------
+ *  Gets max duration from keyframe
+ *
+ * 	timeline: Pointer to timeline (timeline_T *)
+ *
+ * 	return: Duration (float)
+ * 
+*/
+float timeline_get_max_duration_from_keyframe(timeline_T *timeline);
 
 /*
  * Function: timeline_get_current_time(timeline_T *timeline)

@@ -71,8 +71,8 @@ capture_frame_T *init_capture_frame(const char *output_filepath, const char *con
 		perror("failed to allocate memory for capture_frame: ");
 		return NULL;
 	}
-	capture_frame->width = application_instance->width;
-	capture_frame->height = application_instance->height;
+	capture_frame->width = application_instance->size.x;
+	capture_frame->height = application_instance->size.y;
 	capture_frame->fps = application_instance->fps;
 	capture_frame->frames = 0;
 	capture_frame->total_frames = total_duration * capture_frame->fps;

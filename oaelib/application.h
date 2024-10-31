@@ -5,8 +5,7 @@
 
 typedef struct APPLICATION_PROPERTIES_STRUCT
 {
-	int width;
-	int height;
+	Vector2 size;
 	int fps;
 	char *title;
 	void (*init)(void);

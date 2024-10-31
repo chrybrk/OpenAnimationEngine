@@ -9,8 +9,8 @@ int main(int argc, char **argv)
 	application_instance = &init_application_properties;
 
 	InitWindow(
-		init_application_properties.width,
-		init_application_properties.height,
+		init_application_properties.size.x,
+		init_application_properties.size.y,
 		init_application_properties.title
 	);
 	SetTargetFPS(init_application_properties.fps);
