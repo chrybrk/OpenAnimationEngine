@@ -42,6 +42,11 @@ Vector2 offset_alignment(Vector2 position, Vector2 size, float offset_x, float o
 	return (Vector2) { position.x - size.x / 2.0f + offset_x, position.y - size.y / 2.0f + offset_y };
 }
 
+Vector2 offset_alignment_adj(alignment_T alignment, Vector2 position, Vector2 size, float offset_x, float offset_y)
+{
+	return get_alignment_on_surface(alignment, (Vector2) { position.x - size.x, position.y - size.y }, size, (Vector2) { offset_x, offset_y });
+}
+
 keyframe_T *init_keyframe(float start, float end, Vector2 position, Color color, object_T *object)
 {
 	keyframe_T *keyframe = malloc(sizeof(struct KEYFRAME_STRUCT));
@@ -80,6 +85,11 @@ timeline_T *init_timeline(float duration, bool reset)
 void timeline_set_duration(timeline_T *timeline, float duration)
 {
 	timeline->duration = duration;
+}
+
+void timeline_skip_time(timeline_T *timeline, float offset)
+{
+	timeline->currentTime += offset;
 }
 
 float timeline_get_duration(timeline_T *timeline)

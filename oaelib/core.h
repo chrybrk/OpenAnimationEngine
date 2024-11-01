@@ -24,6 +24,7 @@ typedef enum
 
 Vector2 get_alignment_on_surface(alignment_T alignment, Vector2 surface_size, Vector2 object_size, Vector2 offset);
 Vector2 offset_alignment(Vector2 position, Vector2 size, float offset_x, float offset_y);
+Vector2 offset_alignment_adj(alignment_T alignment, Vector2 position, Vector2 size, float offset_x, float offset_y);
 
 /*
  * Function: init_keyframe(float start, float end, Vector2 position, Color color, object_T object))
@@ -64,6 +65,17 @@ timeline_T *init_timeline(float duration, bool reset);
  * 
 */
 void timeline_set_duration(timeline_T *timeline, float duration);
+
+/*
+ * Function: timeline_skip_time(timeline_T *timeline, float offset)
+ * -----------------------
+ *  Skips offset to current duration
+ *
+ * 	timeline: Pointer to timeline (timeline_T *)
+ * 	offset: time
+ * 
+*/
+void timeline_skip_time(timeline_T *timeline, float offset);
 
 /*
  * Function: timeline_get_duration(timeline_T *timeline)

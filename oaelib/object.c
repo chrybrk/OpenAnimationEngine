@@ -25,6 +25,11 @@ typedef struct ARRAY_STRUCT
 	Vector2 gap;
 	float fontSize;
 	Color bg_color;
+	struct highlight_index 
+	{
+		Color color;
+		int index;
+	} *highlight_indexs;
 	animation_T *bg_animation;
 	animation_T *fg_animation;
 } array_T;
@@ -82,6 +87,7 @@ object_T *init_array(size_t size, int elements[size], Vector2 dsize, Vector2 gap
 	memcpy(array->elements, elements, sizeof(int) * size);
 	array->dsize = dsize;
 	array->gap = gap;
+	array->highlight_indexs = NULL;
 	array->fontSize = fontSize;
 	array->bg_color = bg_color;
 	array->bg_animation = bg_animation;
@@ -110,7 +116,8 @@ void draw_array(void *object, float t, Vector2 position, Color color)
 
 	animation_properties_T bg_animation_props = {
 		.color = array->bg_color,
-		.v2 = position
+		.v2 = position,
+		.i1 = -1
 	};
 	animation_flush(array->bg_animation, t, &bg_animation_props);
 
@@ -122,6 +129,7 @@ void draw_array(void *object, float t, Vector2 position, Color color)
 
 	array->bg_color = bg_animation_props.color;
 	position = bg_animation_props.v2;
+	int hidx = bg_animation_props.i1;
 
 	color = fg_animation_props.color;
 	array->fontSize = fg_animation_props.f1;
@@ -129,7 +137,7 @@ void draw_array(void *object, float t, Vector2 position, Color color)
 	for (size_t i = 0; i < array->size; ++i)
 	{
 		Vector2 rel_position = (Vector2) { position.x + (element_size.x * i) + array->gap.x * i, position.y + array->gap.y };
-		DrawRectangleV(rel_position, element_size, array->bg_color);
+		DrawRectangleV(rel_position, element_size, hidx == (int)i ? (Color) { 230, 0, 0, array->bg_color.a } : array->bg_color);
 
 		char text[10]; snprintf(text, 10, "%d", array->elements[i]);
 		int text_width = MeasureText(text, array->fontSize);

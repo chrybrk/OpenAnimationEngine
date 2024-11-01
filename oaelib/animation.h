@@ -9,6 +9,7 @@ typedef struct ANIMATION_STRUCT animation_T;
 
 typedef struct ANIMATION_PROPERTIES_STRUCT
 {
+	int i1;
 	float f1;
 	Vector2 v2;
 	Vector3 v3;
@@ -21,6 +22,7 @@ void fade_in_animation(float t, animation_properties_T init_properties, animatio
 void fade_out_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
 void color_interpolation_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
 void move_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
+void array_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties);
 
 animation_T *init_animation();
 void terminate_animation() __attribute__((destructor));

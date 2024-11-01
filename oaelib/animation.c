@@ -33,6 +33,11 @@ void move_animation(float t, animation_properties_T init_properties, animation_p
 	end_properties->v2 = Vector2MoveTowards(end_properties->v2, init_properties.v2, Vector2Distance(end_properties->v2, init_properties.v2) * t);
 }
 
+void array_animation(float t, animation_properties_T init_properties, animation_properties_T *end_properties)
+{
+	end_properties->i1 = init_properties.i1;
+}
+
 typedef struct ANIMATION_STRUCT
 {
 	list_T *animations;

@@ -140,3 +140,85 @@ int main(void)
 
 	return 0;
 }
+
+void DrawArrow(Vector2 start, Vector2 end, float size, Color color)
+{
+    // Draw the main line
+    DrawLineV(start, end, color);
+
+    // Calculate direction vector
+    Vector2 direction = Vector2Normalize(Vector2Subtract(end, start));
+
+    // Calculate the arrowhead points
+    Vector2 leftWing = Vector2Subtract(end, Vector2Scale(Vector2Rotate(direction, PI / 6), size));
+    Vector2 rightWing = Vector2Subtract(end, Vector2Scale(Vector2Rotate(direction, -PI / 6), size));
+
+    // Draw the arrowhead
+    DrawLineV(end, leftWing, color);
+    DrawLineV(end, rightWing, color);
+}
+
+void DrawBezierCurve(Vector2 start, Vector2 control, Vector2 end, int segments, Color color)
+{
+    Vector2 previous = start;
+
+    for (int i = 1; i <= segments; i++)
+    {
+        float t = (float)i / segments;
+        float invT = 1 - t;
+
+        // Quadratic Bézier formula
+        Vector2 point = {
+            invT * invT * start.x + 2 * invT * t * control.x + t * t * end.x,
+            invT * invT * start.y + 2 * invT * t * control.y + t * t * end.y
+        };
+
+        DrawLineV(previous, point, color);
+        previous = point;
+    }
+}
+
+// Function to draw an arrow line with optional curve and customizable arrowhead angle
+void DrawArrowLine(Vector2 start, Vector2 target, float arrowSize, float arrowAngle, bool isCurved, Color color)
+{
+    // Calculate distance and angle between start and target
+    Vector2 direction = Vector2Subtract(target, start);
+    float distance = Vector2Length(direction);
+    float angle = atan2f(direction.y, direction.x);
+
+    // Draw line (either straight or curved)
+    if (isCurved)
+    {
+        // Curved line (quadratic Bezier curve with control point in between start and target)
+        Vector2 controlPoint = { (start.x + target.x) / 2, (start.y + target.y) / 2 - distance / 4 };
+        int segments = 20;
+        
+        Vector2 previous = start;
+        for (int i = 1; i <= segments; i++)
+        {
+            float t = (float)i / segments;
+            float invT = 1.0f - t;
+
+            Vector2 point = {
+                invT * invT * start.x + 2 * invT * t * controlPoint.x + t * t * target.x,
+                invT * invT * start.y + 2 * invT * t * controlPoint.y + t * t * target.y
+            };
+
+            DrawLineV(previous, point, color);
+            previous = point;
+        }
+    }
+    else
+    {
+        // Straight line
+        DrawLineV(start, target, color);
+    }
+
+    // Draw the arrowhead with customizable angle
+    Vector2 arrowDirection = Vector2Normalize(Vector2Subtract(target, start));
+    Vector2 leftWing = Vector2Subtract(target, Vector2Scale(Vector2Rotate(arrowDirection, arrowAngle), arrowSize));
+    Vector2 rightWing = Vector2Subtract(target, Vector2Scale(Vector2Rotate(arrowDirection, -arrowAngle), arrowSize));
+
+    DrawLineV(target, leftWing, color);
+    DrawLineV(target, rightWing, color);
+}
