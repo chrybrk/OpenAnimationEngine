@@ -1,6 +1,7 @@
 #include "OpenAnimationEngine.h"
 
 timeline_T *timeline;
+capture_frame_T *capture_frame;
 
 void introduction_scene()
 {
@@ -148,17 +149,20 @@ void init(void)
 	introduction_creation_scene();
 	ending_scene();
 
-	timeline_set_duration(timeline, timeline_get_max_duration_from_keyframe(timeline));
+	float max_duration = timeline_get_max_duration_from_keyframe(timeline);
+	timeline_set_duration(timeline, max_duration);
+	capture_frame = init_capture_frame("bin/output.raw", "bin/output.mp4", max_duration);
 }
 
 void uninit(void)
 {
 	free(timeline);
+	capture_frame_unload(capture_frame);
 }
 
 void run(void)
 {
-	while (!WindowShouldClose())
+	while (!WindowShouldClose() && !capture_frame_should_end(capture_frame))
 	{
 		ClearBackground((Color) { 23, 23, 23, 255 });
 		BeginDrawing();
@@ -167,11 +171,13 @@ void run(void)
 			timeline_update(timeline, GetFrameTime());
 		}
 		EndDrawing();
+
+		capture_frame_push(capture_frame);
 	}
 }
 
 application_properties_T init_application_properties = {
-	.size = (Vector2) { 1200, 720 },
+	.size = (Vector2) { 1920, 1080 },
 	.fps = 30,
 	.title = "Sandbox",
 	.init = init,
